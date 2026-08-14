@@ -1,0 +1,6 @@
+{
+  "name": "Fourmilière IA - Plateforme Évolutive d'Agents IA",
+  "description": "Plateforme SaaS Cloud-Native avec Directeur Général IA, orchestration modulaire, mémoire persistante, sécurité Zero Trust et interface Fourmilière 3D.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
