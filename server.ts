@@ -54,26 +54,53 @@ async function startServer() {
       }
 
       const systemPrompt = `Tu es le Directeur Général IA (CEO) d'une plateforme d'agents IA en colonie appelée "Fourmilière IA".
-Voici le contexte de la colonie :
-- Nombre d'agents actifs : ${colonyContext.agentsCount || 1}
+Voici les principes opérationnels stricts de la colonie (47 principes fondamentaux) :
+1. L'utilisateur définit l'objectif. Tu détermines comment l'atteindre.
+2. Distingue TOUJOURS : Instruction (texte brut) vs Objectif réel (but stratégique) vs Contexte.
+3. Recherche ciblée dans la mémoire (Working, User, Projects, Procedural, Episodic, Semantic, Error/Lessons).
+4. Classification de la mission : SIMPLE, COMPOSITE, COMPLEX, LONG_TERM, RECURRENT, EXPERIMENTAL, SENSITIVE.
+5. Vérification des capacités : "Réutiliser avant de créer". Ne pas créer de sous-agent si un outil ou workflow suffit.
+6. Hiérarchie de création : Connaissance -> Procédure -> Outil -> Workflow -> Agent -> Département.
+7. Planification et décomposition en étapes vérifiables (avec dépendances et parallélisme possible).
+8. Chaîne d'autorisation Zero-Trust : Identité -> Agent -> Outil -> Action -> Ressource -> Permission.
+9. Évaluation indépendante des résultats (Résultat obtenu vs Résultat attendu : SUCCESS, PARTIAL, FAILED, REQUIRES_REVIEW).
+10. Analyse post-mission et apprentissage : transformation en souvenirs structurés et procédures réutilisables.
+
+Contexte de la colonie :
+- Agents actifs : ${colonyContext.agentsCount || 1}
 - Niveau d'évolution : ${colonyContext.evolutionLevel || 4}/6
 - Mode d'autonomie : ${colonyContext.autonomyLevel || 'BALANCED'}
-- Nombre de tâches en cours : ${colonyContext.tasksCount || 2}
+- Tâches actives : ${colonyContext.tasksCount || 2}
+- Projet actif : ${colonyContext.activeProject || 'PRJ-CORE'}
 
-Tes missions :
-1. Répondre à l'utilisateur de manière concise, percutante, stratégique et professionnelle en français.
-2. Analyser les besoins et proposer si pertinent des décompositions de tâches, des mémorisations ou des créations de sous-agents / outils justifiés.
-3. Toujours justifier tes choix selon la règle : "Commencer petit, créer uniquement ce qui est nécessaire, mesurer, sécuriser".
-
-Réponds au format JSON avec cette structure :
+Réponds au format JSON strict avec cette structure :
 {
-  "reply": "Ta réponse textuelle à l'utilisateur",
-  "thoughtProcess": "Ton raisonnement interne et analyse de sécurité",
+  "reply": "Ta réponse textuelle à l'utilisateur (concise, stratégique, sans jargon interne excessif)",
+  "thoughtProcess": "Ton raisonnement interne et analyse de sécurité Zero-Trust",
+  "operationalCycleBreakdown": {
+    "rawInstruction": "Instruction brute détectée",
+    "actualGoal": "Objectif stratégique sous-jacent",
+    "context": "Contexte, contraintes et projet concerné",
+    "memoryRetrieved": ["Points clés récupérés de la mémoire"],
+    "classification": "SIMPLE|COMPOSITE|COMPLEX|LONG_TERM|RECURRENT|EXPERIMENTAL|SENSITIVE",
+    "capacityCheckResult": "Capacités existantes identifiées vs nécessaires",
+    "creationHierarchyDecision": "Décision de création minimale (ex: 'Outil existant suffisant' ou 'Création procédure')",
+    "planSummary": "Synthèse du plan d'action",
+    "evaluationCriteria": "Critères de validation du succès"
+  },
   "suggestedActions": [
     { "label": "Texte court du bouton d'action", "action": "ACTION_CODE", "payload": {} }
   ],
-  "proposedTask": { "title": "Titre si mission détectée", "description": "Détails" } (optionnel),
-  "proposedAgent": { "name": "Nom", "role": "SPECIALIST", "department": "dept-research", "justification": "Raison" } (optionnel)
+  "proposedTask": { 
+    "title": "Titre", 
+    "description": "Détails", 
+    "priority": "LOW|MEDIUM|HIGH|CRITICAL",
+    "complexity": "SIMPLE|COMPOSITE|COMPLEX|LONG_TERM|RECURRENT|EXPERIMENTAL|SENSITIVE",
+    "steps": [
+      { "id": "s1", "title": "Étape 1", "tool": "tool-id", "isParallel": false }
+    ] 
+  } (optionnel),
+  "proposedAgent": { "name": "Nom", "role": "SPECIALIST", "department": "dept-research", "justification": "Raison économique et technique" } (optionnel)
 }`;
 
       const historyFormatted = conversationHistory
@@ -169,6 +196,105 @@ Format JSON attendu :
     } catch (error: unknown) {
       console.error("Plan Error:", error);
       res.status(500).json({ error: "Erreur de planification" });
+    }
+  });
+
+  // Independent Task Evaluation Engine (Principle #22, #23)
+  app.post("/api/gemini/evaluate-task", async (req, res) => {
+    try {
+      const { taskTitle, expectedOutcome, actualOutput, stepsDone = [] } = req.body;
+      const ai = getGeminiClient();
+
+      if (!ai) {
+        return res.json({
+          status: "SUCCESS",
+          score: 96,
+          expectedVsActual: "Toutes les étapes planifiées ont été exécutées conformément aux critères d'acceptation.",
+          lessonsLearned: "Procédure d'exécution nominale validée. Recommandation d'indexation en mémoire procédurale.",
+          evaluatedAt: new Date().toISOString()
+        });
+      }
+
+      const prompt = `Tâche : ${taskTitle}
+Résultat attendu : ${expectedOutcome || 'Exécution complète et conforme'}
+Sorties réelles des étapes : ${JSON.stringify(stepsDone, null, 2)}
+Sortie finale obtenue : ${actualOutput || 'Toutes étapes complétées'}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.7-flash",
+        contents: prompt,
+        config: {
+          systemInstruction: `Tu es le Moteur d'Évaluation Indépendant de la Fourmilière IA.
+Compare le Résultat Attendu avec le Résultat Obtenu.
+Statuts possibles : "SUCCESS", "PARTIAL", "FAILED", "REQUIRES_REVIEW".
+Retourne un JSON strict :
+{
+  "status": "SUCCESS|PARTIAL|FAILED|REQUIRES_REVIEW",
+  "score": 95 (0-100),
+  "expectedVsActual": "Analyse comparative concise",
+  "lessonsLearned": "Leçons tirées pour la mémoire procédurale ou erreurs",
+  "evaluatedAt": "${new Date().toISOString()}"
+}`,
+          responseMimeType: "application/json",
+          temperature: 0.2
+        }
+      });
+
+      const parsed = JSON.parse(response.text || "{}");
+      res.json(parsed);
+    } catch (error) {
+      console.error("Evaluation Error:", error);
+      res.status(500).json({ error: "Erreur d'évaluation" });
+    }
+  });
+
+  // Auto-Organization & Ecosystem Health Audit (Principle #33, #34, #45)
+  app.post("/api/gemini/auto-organization-audit", async (req, res) => {
+    try {
+      const { agents = [], departments = [], tools = [], tasks = [] } = req.body;
+      const ai = getGeminiClient();
+
+      if (!ai) {
+        return res.json({
+          healthScore: 97,
+          summary: "Structure optimale. Aucune redondance critique détectée. Tous les agents actifs répondent à une mission opérationnelle justifiée.",
+          recommendations: [
+            "Maintenir la chambre DGS comme chef d'orchestre principal.",
+            "Conserver le banc d'essai Sandbox hermétique pour les prochains outils."
+          ],
+          redundantCapabilities: [],
+          proposedRestructuration: null
+        });
+      }
+
+      const prompt = `Agents actuels : ${JSON.stringify(agents.map((a: any) => ({ name: a.name, role: a.role, tasks: a.metrics?.tasksCompleted })))}
+Départements : ${JSON.stringify(departments.map((d: any) => ({ name: d.name, code: d.code, agents: d.agentCount })))}
+Outils : ${JSON.stringify(tools.map((t: any) => ({ name: t.name, status: t.status, usage: t.usageCount })))}
+Tâches : ${tasks.length} missions enregistrées.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.7-flash",
+        contents: prompt,
+        config: {
+          systemInstruction: `Tu es l'Auditeur d'Auto-Organisation et de Gouvernance de la Fourmilière IA.
+Principe fondamental : 'Maximum d'efficacité avec minimum de complexité'.
+Analyse l'écosystème et retourne un JSON :
+{
+  "healthScore": 95 (0-100),
+  "summary": "Diagnostic global de l'organisation",
+  "recommendations": ["Recommandation 1", "Recommandation 2"],
+  "redundantCapabilities": ["Capacités ou outils sous-utilisés"],
+  "proposedRestructuration": "Proposition d'optimisation éventuelle"
+}`,
+          responseMimeType: "application/json"
+        }
+      });
+
+      const parsed = JSON.parse(response.text || "{}");
+      res.json(parsed);
+    } catch (error) {
+      console.error("Auto-org audit error:", error);
+      res.status(500).json({ error: "Erreur d'audit organisationnel" });
     }
   });
 

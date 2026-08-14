@@ -1,0 +1,212 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Helpers
+
+    function isValidUserProfile(data, userId) {
+      return data.userId == userId &&
+             data.email is string && data.email.size() <= 256 &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1024));
+    }
+
+    function isValidAgent(data, userId) {
+      return data.userId == userId &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 128 &&
+             data.role in ['DIRECTEUR_GENERAL', 'DEPT_LEAD', 'SPECIALIST', 'SECURITY_GUARD', 'TOOL_BUILDER'] &&
+             data.status in ['ACTIVE', 'IDLE', 'BUSY', 'SANDBOXING', 'PAUSED', 'ARCHIVED'] &&
+             data.model is string && data.model.size() <= 64 &&
+             (!('specialty' in data) || (data.specialty is string && data.specialty.size() <= 256)) &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 2048)) &&
+             (!('systemPrompt' in data) || (data.systemPrompt is string && data.systemPrompt.size() <= 8192));
+    }
+
+    function isValidDepartment(data, userId) {
+      return data.userId == userId &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 128 &&
+             data.code is string && data.code.size() <= 64 &&
+             data.leadAgentId is string && data.leadAgentId.size() <= 128 &&
+             (!('color' in data) || (data.color is string && data.color.size() <= 32)) &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 1024)) &&
+             (!('mission' in data) || (data.mission is string && data.mission.size() <= 2048));
+    }
+
+    function isValidTask(data, userId) {
+      return data.userId == userId &&
+             data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 256 &&
+             data.priority in ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] &&
+             data.status in ['BACKLOG', 'PLANNING', 'IN_PROGRESS', 'SANDBOX_TEST', 'AWAITING_APPROVAL', 'COMPLETED', 'FAILED'] &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 4096)) &&
+             (!('progress' in data) || (data.progress is number && data.progress >= 0 && data.progress <= 100));
+    }
+
+    function isValidMemory(data, userId) {
+      return data.userId == userId &&
+             data.id is string && data.id.size() <= 128 &&
+             data.category in ['working', 'user', 'projects', 'episodic', 'semantic', 'procedural', 'performance', 'error'] &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 256 &&
+             data.content is string && data.content.size() <= 8192;
+    }
+
+    function isValidTool(data, userId) {
+      return data.userId == userId &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 128 &&
+             data.category in ['SEARCH', 'CODE', 'FILE', 'API', 'ANALYSIS', 'AUTOMATION', 'DESKTOP'] &&
+             data.riskLevel in ['LOW', 'MEDIUM', 'HIGH'] &&
+             data.status in ['PRODUCTION', 'SANDBOX', 'DISABLED'] &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 2048)) &&
+             (!('parametersSchema' in data) || (data.parametersSchema is string && data.parametersSchema.size() <= 4096));
+    }
+
+    function isValidAuditLog(data, userId) {
+      return data.userId == userId &&
+             data.id is string && data.id.size() <= 128 &&
+             data.timestamp is string && data.timestamp.size() <= 64 &&
+             data.agentId is string && data.agentId.size() <= 128 &&
+             data.action is string && data.action.size() <= 128 &&
+             data.status in ['ALLOWED', 'DENIED', 'FLAGGED', 'COMPLETED', 'FAILED'] &&
+             (!('target' in data) || (data.target is string && data.target.size() <= 256)) &&
+             (!('details' in data) || (data.details is string && data.details.size() <= 4096));
+    }
+
+    function isValidGovernanceRequest(data, userId) {
+      return data.userId == userId &&
+             data.id is string && data.id.size() <= 128 &&
+             data.agentId is string && data.agentId.size() <= 128 &&
+             data.actionType in ['CREATE_AGENT', 'CREATE_DEPT', 'EXECUTE_HIGH_RISK_TOOL', 'DEPLOY_PRODUCTION_CODE', 'ACCESS_SECRET', 'CHANGE_GOVERNANCE'] &&
+             data.title is string && data.title.size() <= 256 &&
+             data.status in ['PENDING', 'APPROVED', 'REJECTED'];
+    }
+
+    function isValidChatMessage(data, userId) {
+      return data.userId == userId &&
+             data.id is string && data.id.size() <= 128 &&
+             data.sender in ['USER', 'DIRECTEUR_GENERAL', 'SYSTEM'] &&
+             data.content is string && data.content.size() <= 8192 &&
+             data.timestamp is string && data.timestamp.size() <= 64;
+    }
+
+    function isValidSystemState(data, userId) {
+      return data.userId == userId &&
+             data.id is string && data.id.size() <= 128 &&
+             data.evolutionLevel is number && data.evolutionLevel >= 1 && data.evolutionLevel <= 6 &&
+             data.autonomyLevel in ['SUPERVISED', 'BALANCED', 'AUTONOMOUS'];
+    }
+
+    // Match root test doc for connection validation
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // User Root and Subcollections
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Users cannot list other user accounts
+      allow create: if isOwner(userId) && isValidUserProfile(incoming(), userId);
+      allow update: if isOwner(userId) && isValidUserProfile(incoming(), userId) && incoming().userId == existing().userId;
+      allow delete: if isOwner(userId);
+
+      // Agents Collection
+      match /agents/{agentId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(agentId) && isValidAgent(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(agentId) && isValidAgent(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(agentId);
+      }
+
+      // Departments Collection
+      match /departments/{deptId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(deptId) && isValidDepartment(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(deptId) && isValidDepartment(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(deptId);
+      }
+
+      // Tasks Collection
+      match /tasks/{taskId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(taskId) && isValidTask(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(taskId) && isValidTask(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(taskId);
+      }
+
+      // Memories Collection
+      match /memories/{memoryId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(memoryId) && isValidMemory(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(memoryId) && isValidMemory(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(memoryId);
+      }
+
+      // Tools Collection
+      match /tools/{toolId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(toolId) && isValidTool(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(toolId) && isValidTool(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(toolId);
+      }
+
+      // Audit Logs Collection (Zero Trust Immutable: Read & Create Only, No Update/Delete)
+      match /auditLogs/{logId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(logId) && isValidAuditLog(incoming(), userId);
+        allow update, delete: if false; // Immutable audit trail
+      }
+
+      // Governance Requests Collection
+      match /governanceRequests/{requestId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(requestId) && isValidGovernanceRequest(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(requestId) && isValidGovernanceRequest(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(requestId);
+      }
+
+      // Chat Messages Collection
+      match /chatMessages/{messageId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(messageId) && isValidChatMessage(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(messageId) && isValidChatMessage(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(messageId);
+      }
+
+      // System State Collection
+      match /systemState/{stateId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(stateId) && isValidSystemState(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(stateId) && isValidSystemState(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(stateId);
+      }
+    }
+  }
+}

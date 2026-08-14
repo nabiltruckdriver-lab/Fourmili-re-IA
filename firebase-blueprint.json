@@ -1,0 +1,562 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and metadata",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "description": "The email of the user",
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name",
+          "maxLength": 128
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "User avatar URL",
+          "maxLength": 1024
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp",
+          "maxLength": 64
+        }
+      },
+      "required": ["userId", "email"]
+    },
+    "Agent": {
+      "title": "Agent",
+      "description": "Autonomous AI Agent definition",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "codeName": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "role": {
+          "type": "string",
+          "enum": ["DIRECTEUR_GENERAL", "DEPT_LEAD", "SPECIALIST", "SECURITY_GUARD", "TOOL_BUILDER"],
+          "maxLength": 32
+        },
+        "departmentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "IDLE", "BUSY", "SANDBOXING", "PAUSED", "ARCHIVED"],
+          "maxLength": 32
+        },
+        "avatar": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "model": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "specialty": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "systemPrompt": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "userId", "name", "role", "status", "model"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Anthill department unit",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "leadAgentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "color": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "mission": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "level": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "userId", "name", "code", "leadAgentId"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Orchestrated AI mission or task",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "departmentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "assignedAgentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+          "maxLength": 32
+        },
+        "status": {
+          "type": "string",
+          "enum": ["BACKLOG", "PLANNING", "IN_PROGRESS", "SANDBOX_TEST", "AWAITING_APPROVAL", "COMPLETED", "FAILED"],
+          "maxLength": 32
+        },
+        "progress": {
+          "type": "number"
+        },
+        "tokensBudget": {
+          "type": "number"
+        },
+        "tokensUsed": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "completedAt": {
+          "type": "string",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "userId", "title", "priority", "status"]
+    },
+    "MemoryItem": {
+      "title": "MemoryItem",
+      "description": "6-Partition Memory record",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["working", "user", "projects", "episodic", "semantic", "procedural", "performance", "error"],
+          "maxLength": 32
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "content": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "importance": {
+          "type": "number"
+        },
+        "sourceAgentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "lastAccessedAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "accessCount": {
+          "type": "number"
+        },
+        "confidenceScore": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "userId", "category", "title", "content"]
+    },
+    "Tool": {
+      "title": "Tool",
+      "description": "Executable tool in the sandbox and registry",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "category": {
+          "type": "string",
+          "enum": ["SEARCH", "CODE", "FILE", "API", "ANALYSIS", "AUTOMATION", "DESKTOP"],
+          "maxLength": 32
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "riskLevel": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH"],
+          "maxLength": 32
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PRODUCTION", "SANDBOX", "DISABLED"],
+          "maxLength": 32
+        },
+        "parametersSchema": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "usageCount": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "userId", "name", "category", "riskLevel", "status"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable Zero-Trust audit entry",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "timestamp": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "agentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "agentName": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "action": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "target": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ALLOWED", "DENIED", "FLAGGED", "COMPLETED", "FAILED"],
+          "maxLength": 32
+        },
+        "details": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "ip": {
+          "type": "string",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "userId", "timestamp", "agentId", "action", "status"]
+    },
+    "GovernanceRequest": {
+      "title": "GovernanceRequest",
+      "description": "Human-in-the-loop authorization request",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "agentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "agentName": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "actionType": {
+          "type": "string",
+          "enum": ["CREATE_AGENT", "CREATE_DEPT", "EXECUTE_HIGH_RISK_TOOL", "DEPLOY_PRODUCTION_CODE", "ACCESS_SECRET", "CHANGE_GOVERNANCE"],
+          "maxLength": 64
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "justification": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "APPROVED", "REJECTED"],
+          "maxLength": 32
+        },
+        "riskScore": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "userId", "agentId", "actionType", "title", "status"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Director General dialogue message",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "sender": {
+          "type": "string",
+          "enum": ["USER", "DIRECTEUR_GENERAL", "SYSTEM"],
+          "maxLength": 32
+        },
+        "agentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "agentName": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "content": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "timestamp": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "thoughtProcess": {
+          "type": "string",
+          "maxLength": 4096
+        }
+      },
+      "required": ["id", "userId", "sender", "content", "timestamp"]
+    },
+    "SystemState": {
+      "title": "SystemState",
+      "description": "Overall Anthill System and Evolution configuration",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "appName": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "evolutionLevel": {
+          "type": "number"
+        },
+        "autonomyLevel": {
+          "type": "string",
+          "enum": ["SUPERVISED", "BALANCED", "AUTONOMOUS"],
+          "maxLength": 32
+        },
+        "emergencyLockdown": {
+          "type": "boolean"
+        },
+        "activeAgentsCount": {
+          "type": "number"
+        },
+        "activeTasksCount": {
+          "type": "number"
+        },
+        "totalTokensUsed": {
+          "type": "number"
+        },
+        "sandboxHealthScore": {
+          "type": "number"
+        },
+        "desktopBridgeConnected": {
+          "type": "boolean"
+        },
+        "securityScore": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "userId", "evolutionLevel", "autonomyLevel"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document"
+    },
+    "/users/{userId}/agents/{agentId}": {
+      "schema": "Agent",
+      "description": "AI Agents configured for this colony"
+    },
+    "/users/{userId}/departments/{deptId}": {
+      "schema": "Department",
+      "description": "Anthill specialized departments"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Orchestrated tasks and multi-agent missions"
+    },
+    "/users/{userId}/memories/{memoryId}": {
+      "schema": "MemoryItem",
+      "description": "6-Partition long-term and working memory"
+    },
+    "/users/{userId}/tools/{toolId}": {
+      "schema": "Tool",
+      "description": "Sandbox-tested and production agent tools"
+    },
+    "/users/{userId}/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Zero Trust immutable security audit records"
+    },
+    "/users/{userId}/governanceRequests/{requestId}": {
+      "schema": "GovernanceRequest",
+      "description": "Human-in-the-loop permission and authorization requests"
+    },
+    "/users/{userId}/chatMessages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Conversation history with the Directeur General IA"
+    },
+    "/users/{userId}/systemState/{stateId}": {
+      "schema": "SystemState",
+      "description": "Current colony evolution and autonomy state"
+    }
+  }
+}

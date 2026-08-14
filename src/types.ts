@@ -25,6 +25,15 @@ export interface AgentMetric {
   lastActive: string;
 }
 
+export interface AgentVersion {
+  version: string;
+  releasedAt: string;
+  changelog: string;
+  sandboxScore: number;
+  isActive: boolean;
+  canRollback: boolean;
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -39,10 +48,11 @@ export interface Agent {
   systemPrompt: string;
   permissions: AgentPermission[];
   toolsAllowed: string[]; // Tool IDs
-  memoryAccess: ('working' | 'user' | 'projects' | 'episodic' | 'semantic' | 'procedural' | 'performance')[];
+  memoryAccess: ('working' | 'user' | 'projects' | 'episodic' | 'semantic' | 'procedural' | 'performance' | 'error')[];
   metrics: AgentMetric;
   createdAt: string;
   version: string;
+  versionHistory?: AgentVersion[];
   parentAgentId?: string;
 }
 
@@ -62,6 +72,8 @@ export interface Department {
 
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type TaskStatus = 'BACKLOG' | 'PLANNING' | 'IN_PROGRESS' | 'SANDBOX_TEST' | 'AWAITING_APPROVAL' | 'COMPLETED' | 'FAILED';
+export type MissionComplexity = 'SIMPLE' | 'COMPOSITE' | 'COMPLEX' | 'LONG_TERM' | 'RECURRENT' | 'EXPERIMENTAL' | 'SENSITIVE';
+export type EvaluationStatus = 'SUCCESS' | 'PARTIAL' | 'FAILED' | 'REQUIRES_REVIEW';
 
 export interface TaskStep {
   id: string;
@@ -71,15 +83,20 @@ export interface TaskStep {
   status: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED';
   output?: string;
   timestamp?: string;
+  dependsOn?: string[]; // IDs of required prior steps for parallel execution
+  isParallel?: boolean;
 }
 
 export interface Task {
   id: string;
   title: string;
   description: string;
+  projectId?: string;
   departmentId?: string;
   assignedAgentId?: string;
   priority: TaskPriority;
+  complexity?: MissionComplexity;
+  expectedOutcome?: string;
   status: TaskStatus;
   progress: number; // 0-100
   steps: TaskStep[];
@@ -90,6 +107,110 @@ export interface Task {
   parentTaskId?: string;
   requiresHumanApproval?: boolean;
   approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  
+  // Operational Cycle Details
+  instructionVsGoal?: {
+    rawInstruction: string;
+    actualGoal: string;
+    contextDetected: string;
+    missingInfo?: string[];
+  };
+  evaluation?: {
+    status: EvaluationStatus;
+    score: number; // 0-100
+    expectedVsActual: string;
+    evaluatorAgentId?: string;
+    evaluatedAt: string;
+    lessonsLearned?: string;
+  };
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  objective: string;
+  status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+  assignedAgentIds: string[];
+  departmentIds: string[];
+  taskIds: string[];
+  isolationPolicy: 'STRICT' | 'SHARED_READ_ONLY' | 'FEDERATED';
+  tokensUsed: number;
+  createdAt: string;
+  metrics: {
+    totalMissions: number;
+    successRate: number;
+  };
+}
+
+export interface SkillDefinition {
+  id: string;
+  name: string;
+  category: string;
+  objective: string;
+  requiredKnowledge: string[];
+  procedure: string;
+  toolsRequired: string[];
+  constraints: string[];
+  successCriteria: string[];
+  validationMethod: string;
+  testedInSandbox: boolean;
+  status: 'PROPOSED' | 'VALIDATED' | 'PRODUCTION';
+  createdAt: string;
+}
+
+export interface ProceduralWorkflow {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  triggerCondition: string;
+  steps: {
+    order: number;
+    name: string;
+    toolId?: string;
+    roleRequired: AgentRole;
+  }[];
+  successCount: number;
+  averageExecutionTimeSec: number;
+  confidenceScore: number;
+  createdAt: string;
+}
+
+export type ColonyEventType = 
+  | 'AgentCreated' 
+  | 'AgentStarted' 
+  | 'AgentCompleted' 
+  | 'AgentFailed' 
+  | 'AgentUpdated' 
+  | 'AgentArchived' 
+  | 'AgentTerminated'
+  | 'DepartmentCreated' 
+  | 'DepartmentFormed'
+  | 'TaskCreated' 
+  | 'TaskStepExecuted' 
+  | 'TaskCompleted' 
+  | 'TaskFailed' 
+  | 'ToolAttached'
+  | 'MemoryCreated' 
+  | 'MemoryUpdated' 
+  | 'MessageRouted'
+  | 'WorkflowSynthesized' 
+  | 'PermissionChecked' 
+  | 'EvaluationCompleted' 
+  | 'EmergencyLockdown' 
+  | 'AutoOrganizationAudit';
+
+export interface ColonyEvent {
+  id: string;
+  type: ColonyEventType;
+  title: string;
+  details: string;
+  sourceId: string;
+  sourceName: string;
+  severity: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+  timestamp: string;
 }
 
 export type MemoryCategory = 'working' | 'user' | 'projects' | 'episodic' | 'semantic' | 'procedural' | 'performance' | 'error';
@@ -107,6 +228,7 @@ export interface MemoryItem {
   lastAccessedAt: string;
   accessCount: number;
   confidenceScore: number; // 0-1
+  isDeprecated?: boolean;
 }
 
 export interface Tool {
@@ -178,6 +300,7 @@ export interface SystemState {
   sandboxHealthScore: number;
   desktopBridgeConnected: boolean;
   securityScore: number;
+  activeProjectId?: string;
 }
 
 export interface ChatMessage {
@@ -194,4 +317,15 @@ export interface ChatMessage {
   }[];
   relatedTaskId?: string;
   thoughtProcess?: string;
+  operationalCycleBreakdown?: {
+    rawInstruction: string;
+    actualGoal: string;
+    context: string;
+    memoryRetrieved: string[];
+    classification: MissionComplexity;
+    capacityCheckResult: string;
+    creationHierarchyDecision: string;
+    planSummary: string;
+    evaluationCriteria: string;
+  };
 }

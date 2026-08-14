@@ -1,4 +1,19 @@
-import { Agent, Department, Task, MemoryItem, Tool, AuditLog, GovernanceRequest, EvolutionStage, SystemState, ChatMessage } from '../types';
+import { 
+  Agent, 
+  Department, 
+  Task, 
+  MemoryItem, 
+  Tool, 
+  AuditLog, 
+  GovernanceRequest, 
+  EvolutionStage, 
+  SystemState, 
+  ChatMessage,
+  Project,
+  SkillDefinition,
+  ProceduralWorkflow,
+  ColonyEvent
+} from '../types';
 
 export const INITIAL_DIRECTOR_AGENT: Agent = {
   id: 'agent-dg-001',
@@ -362,6 +377,140 @@ export const EVOLUTION_STAGES: EvolutionStage[] = [
   }
 ];
 
+export const INITIAL_PROJECTS: Project[] = [
+  {
+    id: 'proj-001',
+    name: 'Système Fourmilière Core & Gouvernance',
+    code: 'PRJ-CORE',
+    description: 'Infrastructure fondamentale, moteur d\'évaluation des agents, registre d\'outils et mémoire 6-partitions.',
+    objective: 'Établir une colonie d\'agents IA auto-organisée, résiliente et sécurisée sous gouvernance humaine.',
+    status: 'ACTIVE',
+    assignedAgentIds: ['agent-dg-001'],
+    departmentIds: ['dept-core', 'dept-dev'],
+    taskIds: ['task-001'],
+    isolationPolicy: 'STRICT',
+    tokensUsed: 24500,
+    createdAt: '2026-08-01T08:00:00.000Z',
+    metrics: {
+      totalMissions: 8,
+      successRate: 100
+    }
+  },
+  {
+    id: 'proj-002',
+    name: 'Veille & Intelligence Technologique',
+    code: 'PRJ-INTEL',
+    description: 'Extraction sémantique, benchmark des modèles 2026 et apprentissage procédural automatisé.',
+    objective: 'Alimenter la mémoire sémantique et générer des procédures reproductibles de veille continue.',
+    status: 'ACTIVE',
+    assignedAgentIds: ['agent-dg-001'],
+    departmentIds: ['dept-research'],
+    taskIds: ['task-002'],
+    isolationPolicy: 'SHARED_READ_ONLY',
+    tokensUsed: 17850,
+    createdAt: '2026-08-08T10:00:00.000Z',
+    metrics: {
+      totalMissions: 6,
+      successRate: 96.5
+    }
+  }
+];
+
+export const INITIAL_SKILLS: SkillDefinition[] = [
+  {
+    id: 'skill-001',
+    name: 'Synthèse Sémantique & Résumé Exécutif',
+    category: 'Analyse & Synthèse',
+    objective: 'Condenser de larges corpus documentaires en points clés actionnables sans perte de contexte.',
+    requiredKnowledge: ['Méthodes de scoring sémantique', 'Hiérarchisation d\'information', 'Format markdown standardisé'],
+    procedure: '1. Extraction des entités clés -> 2. Filtrage des redondances -> 3. Formatage exécutif pour le DG',
+    toolsRequired: ['tool-search-01', 'tool-mem-03'],
+    constraints: ['Moins de 400 mots par rapport', 'Citations directes des sources nécessaires'],
+    successCriteria: ['Score de fidélité > 95%', 'Zéro hallucination détectée'],
+    validationMethod: 'Double passe d\'évaluation croisée en sandbox',
+    testedInSandbox: true,
+    status: 'PRODUCTION',
+    createdAt: '2026-08-05T12:00:00Z'
+  },
+  {
+    id: 'skill-002',
+    name: 'Audit de Sécurité Statique de Code',
+    category: 'Ingénierie & Sécurité',
+    objective: 'Détecter les failles d\'injection, exfiltrations et vulnérabilités de privilèges dans les scripts avant promotion.',
+    requiredKnowledge: ['OWASP Top 10', 'Principes Zero Trust', 'Conteneurisation hermétique'],
+    procedure: '1. Analyse lexicale du code -> 2. Vérification des appels réseau -> 3. Émission du score de conformité',
+    toolsRequired: ['tool-code-02'],
+    constraints: ['Temps d\'exécution max 3000ms', 'Environnement réseau totalement coupé'],
+    successCriteria: ['Score de sécurité >= 90/100'],
+    validationMethod: 'Test automatisé contre une suite de vecteurs malveillants',
+    testedInSandbox: true,
+    status: 'PRODUCTION',
+    createdAt: '2026-08-10T14:00:00Z'
+  }
+];
+
+export const INITIAL_PROCEDURAL_WORKFLOWS: ProceduralWorkflow[] = [
+  {
+    id: 'wf-001',
+    name: 'Cycle Résolu de Recherche & Synthèse Épisodique',
+    code: 'WF-SEARCH-SYNTHESIS',
+    description: 'Procédure validée lors de 12 missions réussies pour collecter, nettoyer et indexer des informations stratégiques.',
+    triggerCondition: 'Demande de recherche approfondie ou cadrage d\'un nouveau projet',
+    steps: [
+      { order: 1, name: 'Cadrage de l\'objectif & vérification mémoire', toolId: 'tool-mem-03', roleRequired: 'DIRECTEUR_GENERAL' },
+      { order: 2, name: 'Recherche web ciblée et multi-sources', toolId: 'tool-search-01', roleRequired: 'SPECIALIST' },
+      { order: 3, name: 'Validation et indexation dans la mémoire sémantique', toolId: 'tool-mem-03', roleRequired: 'DIRECTEUR_GENERAL' }
+    ],
+    successCount: 12,
+    averageExecutionTimeSec: 4.8,
+    confidenceScore: 0.98,
+    createdAt: '2026-08-09T16:00:00Z'
+  }
+];
+
+export const INITIAL_COLONY_EVENTS: ColonyEvent[] = [
+  {
+    id: 'evt-001',
+    type: 'AgentStarted',
+    title: 'Directeur Général IA Opérationnel',
+    details: 'Le Directeur Général NEXUS-PRIME a initialisé la colonie avec succès.',
+    sourceId: 'agent-dg-001',
+    sourceName: 'Directeur Général IA',
+    severity: 'SUCCESS',
+    timestamp: 'Il y a 10 min'
+  },
+  {
+    id: 'evt-002',
+    type: 'MemoryUpdated',
+    title: 'Indexation de la Mémoire 6-Partitions',
+    details: 'Synchronisation des partitions Utilisateur, Projets, Sémantique et Procédurale.',
+    sourceId: 'mem-indexer',
+    sourceName: 'Vector Memory Indexer',
+    severity: 'INFO',
+    timestamp: 'Il y a 8 min'
+  },
+  {
+    id: 'evt-003',
+    type: 'TaskStepExecuted',
+    title: 'Vérification du Banc d\'Essai Sandbox',
+    details: 'Tous les conteneurs d\'évaluation de code sont hermétiques et opérationnels.',
+    sourceId: 'tool-code-02',
+    sourceName: 'Sandbox Runner',
+    severity: 'INFO',
+    timestamp: 'Il y a 5 min'
+  },
+  {
+    id: 'evt-004',
+    type: 'PermissionChecked',
+    title: 'Audit Zero Trust Réussi',
+    details: 'Chaque canal d\'appel et échange inter-agent est authentifié sous signature cryptographique.',
+    sourceId: 'sec-guard',
+    sourceName: 'Zero Trust Sentinel',
+    severity: 'SUCCESS',
+    timestamp: 'Il y a 2 min'
+  }
+];
+
 export const INITIAL_SYSTEM_STATE: SystemState = {
   appName: 'Fourmilière IA - Colonie Cloud-Native',
   evolutionLevel: 4,
@@ -372,7 +521,8 @@ export const INITIAL_SYSTEM_STATE: SystemState = {
   totalTokensUsed: 42350,
   sandboxHealthScore: 98,
   desktopBridgeConnected: false,
-  securityScore: 99
+  securityScore: 99,
+  activeProjectId: 'proj-001'
 };
 
 export const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
